@@ -27,12 +27,60 @@ struct ContentView: View {
                 
                 VStack(spacing: 20) {
                     CalorieTrackingButton(title: "Track by calorie count") {
-                        // Показываем экран ввода калорий
+                        
+                        if HKHealthStore.isHealthDataAvailable() {
+                             let healthStore = HKHealthStore()
+                             
+                             // Типы данных, к которым мы хотим получить доступ
+                             let typesToShare: Set = [
+                                 HKQuantityType.quantityType(forIdentifier: .dietaryEnergyConsumed)!
+                             ]
+                             
+                             let typesToRead: Set = [
+                                 HKQuantityType.quantityType(forIdentifier: .dietaryEnergyConsumed)!
+                             ]
+                             
+                             // Запрос авторизации
+                             healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead) { (success, error) in
+                                 if success {
+                                     print("HealthKit access permission granted")
+                                 } else {
+                                     print("Error requesting permission: \(String(describing: error))")
+                                 }
+                             }
+                         } else {
+                             print("HealthKit is not available on this device")
+                         }
+                        
                         showingCalorieInput = true
                     }
                     
                     CalorieTrackingButton(title: "Track by weight") {
-                        // Показываем экран ввода веса
+                        
+                        if HKHealthStore.isHealthDataAvailable() {
+                             let healthStore = HKHealthStore()
+                             
+                             // Типы данных, к которым мы хотим получить доступ
+                             let typesToShare: Set = [
+                                 HKQuantityType.quantityType(forIdentifier: .dietaryEnergyConsumed)!
+                             ]
+                             
+                             let typesToRead: Set = [
+                                 HKQuantityType.quantityType(forIdentifier: .dietaryEnergyConsumed)!
+                             ]
+                             
+                             // Запрос авторизации
+                             healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead) { (success, error) in
+                                 if success {
+                                     print("HealthKit access permission granted")
+                                 } else {
+                                     print("Error requesting permission: \(String(describing: error))")
+                                 }
+                             }
+                         } else {
+                             print("HealthKit is not available on this device")
+                         }
+                        
                         showingWeightInput = true
                     }
                 }
@@ -91,7 +139,19 @@ struct CalorieInputView: View {
                 
                 Button(action: {
                     if let calories = Int(calorieInput) {
-                        print("Added calories: \(calories)")
+                        // Запись потребленных калорий в Apple Health
+                        let healthStore = HKHealthStore()
+                        let energyType = HKQuantityType.quantityType(forIdentifier: .dietaryEnergyConsumed)!
+                        let calories = HKQuantity(unit: .kilocalorie(), doubleValue: Double(calories))
+                        let sample = HKQuantitySample(type: energyType, quantity: calories, start: Date(), end: Date())
+                        
+                        healthStore.save(sample) { (success, error) in
+                            if let error = error {
+                                print("Ошибка при сохранении калорий: \(error.localizedDescription)")
+                            } else {
+                                print("Калории успешно сохранены в Apple Health")
+                            }
+                        }
                         isPresented = false
                         calorieInput = ""
                     }
