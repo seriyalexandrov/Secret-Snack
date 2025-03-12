@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import HealthKit
 
 struct ContentView: View {
     var body: some View {
@@ -16,20 +17,42 @@ struct ContentView: View {
             VStack(spacing: 40) {
                 Spacer()
                 
-                Text("Как вы хотите отслеживать калории?")
+                Text("How would you like to track calories?")
                     .font(.system(size: 24, weight: .bold))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 20)
                 
                 VStack(spacing: 20) {
-                    CalorieTrackingButton(title: "Отслеживать по количеству калорий") {
-                        // Действие для первой кнопки
-                        print("Выбрано отслеживание по количеству калорий")
+                    CalorieTrackingButton(title: "Track by calorie count") {
+                        // Запрос разрешения на доступ к HealthKit
+                        if HKHealthStore.isHealthDataAvailable() {
+                            let healthStore = HKHealthStore()
+                            
+                            // Типы данных, к которым мы хотим получить доступ
+                            let typesToShare: Set = [
+                                HKQuantityType.quantityType(forIdentifier: .dietaryEnergyConsumed)!
+                            ]
+                            
+                            let typesToRead: Set = [
+                                HKQuantityType.quantityType(forIdentifier: .dietaryEnergyConsumed)!
+                            ]
+                            
+                            // Запрос авторизации
+                            healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead) { (success, error) in
+                                if success {
+                                    print("HealthKit access permission granted")
+                                } else {
+                                    print("Error requesting permission: \(String(describing: error))")
+                                }
+                            }
+                        } else {
+                            print("HealthKit is not available on this device")
+                        }
                     }
                     
-                    CalorieTrackingButton(title: "Отслеживать по весу") {
+                    CalorieTrackingButton(title: "Track by weight") {
                         // Действие для второй кнопки
-                        print("Выбрано отслеживание по весу")
+                        print("Weight tracking selected")
                     }
                 }
                 .padding(.horizontal, 20)
